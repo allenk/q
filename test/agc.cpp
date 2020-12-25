@@ -46,7 +46,7 @@ void process(std::string name, q::duration hold)
 
    // Noise reduction
    auto nrf = q::moving_average<float>{ 32 };
-   auto xfade = q::crossfade{ -20_dB };
+   auto xfade = q::level_crossfade{-20_dB };
    constexpr auto threshold = float(-80_dB);
 
    for (auto i = 0; i != in.size(); ++i)
