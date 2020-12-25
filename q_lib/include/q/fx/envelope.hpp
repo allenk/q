@@ -152,7 +152,7 @@ namespace cycfi::q
    ////////////////////////////////////////////////////////////////////////////
    // This rms envelope follower combines fast response, low ripple using
    // moving RMS detection and the fast_envelope_follower for tracking the
-   // moving RMS as well as prividing an output that is easy to filter using
+   // moving RMS as well as providing an output that is easy to filter using
    // a simple one-pole lowpass filter. Unlike other envelope followers in
    // this header, this one works on the dB domain, which makes it easy to
    // use as an envelope follower for dynamic range effects (compressor,
