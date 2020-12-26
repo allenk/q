@@ -104,7 +104,12 @@ namespace cycfi::q
    // Based on http://tinyurl.com/yat2tuf8
    //
    // There is no filtering. The output is a jagged, staircase-like envelope.
-   // That way, this can be useful for analysis such as onset detection.
+   // That way, this can be useful for analysis such as onset detection. For
+   // monophonic signals, the hold duration should be longer than the period
+   // of the lowest frequency of the signal we wish to track. The hold
+   // parameter determines the staircase step duration. This staircase-like
+   // envelope can be effectively smoothed out using a moving average filter
+   // with the same duration as the hold parameter.
    ////////////////////////////////////////////////////////////////////////////
    struct fast_envelope_follower
    {
