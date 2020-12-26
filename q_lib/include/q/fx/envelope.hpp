@@ -153,35 +153,32 @@ namespace cycfi::q
    // This rms envelope follower combines fast response, low ripple using
    // moving RMS detection and the fast_envelope_follower for tracking the
    // moving RMS as well as providing an output that is easy to filter using
-   // a simple one-pole lowpass filter. Unlike other envelope followers in
-   // this header, this one works on the dB domain, which makes it easy to
-   // use as an envelope follower for dynamic range effects (compressor,
-   // expander, and agc) which also works on the dB domain.
+   // a moving average filter. Unlike other envelope followers in this
+   // header, this one works in the dB domain, which makes it easy to use as
+   // an envelope follower for dynamic range effects (compressor, expander,
+   // and agc) which also work in the dB domain.
    //
    // The signal path is as follows:
    //    1. Square signal
-   //    2. Moving average
-   //    3. Fast envelope follower
-   //    4. Risidual ripple filter
-   //    5. Square root.
+   //    2. Fast envelope follower
+   //    3. Moving average
+   //    4. Square root.
    //
    // Designed by Joel de Guzman (June 2020)
    ////////////////////////////////////////////////////////////////////////////
    struct fast_rms_envelope_follower
    {
       constexpr static auto threshold = float(-120_dB);
-      constexpr static auto ripple_filter_cutoff = 500_Hz;
 
       fast_rms_envelope_follower(duration hold, std::uint32_t sps)
        : _fenv(hold, sps)
-       , _ma(std::size_t(float(hold * sps))/8)
-       , _lp(ripple_filter_cutoff, sps)
+       , _ma(hold, sps)
       {
       }
 
       decibel operator()(float s)
       {
-         auto e = _lp(_fenv(_ma(s * s)));
+         auto e = _ma(_fenv(s * s));
          if (e < threshold)
             e = 0;
 
@@ -198,7 +195,6 @@ namespace cycfi::q
       q::decibel              _db = 0_dB;
       fast_envelope_follower  _fenv;
       moving_average<float>   _ma;
-      one_pole_lowpass        _lp;
    };
 }
 
