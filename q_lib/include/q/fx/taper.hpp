@@ -18,7 +18,12 @@ namespace cycfi::q
          return _w[i];
       }
 
-      std::vector<float>   _w;
+      std::size_t size() const
+      {
+         return _w.size();
+      }
+
+      std::vector<float> _w;
    };
 
    ////////////////////////////////////////////////////////////////////////////
