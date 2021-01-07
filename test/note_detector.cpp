@@ -5,7 +5,7 @@
 =============================================================================*/
 #include <q/support/literals.hpp>
 #include <q_io/audio_file.hpp>
-#include <q/fx/onset_detector.hpp>
+#include <q/fx/note_detector.hpp>
 #include <vector>
 #include "notes.hpp"
 
@@ -15,27 +15,49 @@ using namespace notes;
 
 void process(
    std::string name, std::vector<float> const& in
- , std::uint32_t sps, std::size_t n)
-{
+ , std::uint32_t sps, q::frequency f)
+{;
+   q::duration hold = f.period() * 1.1;
    constexpr auto n_channels = 3;
    std::vector<float> out(in.size() * n_channels);
 
    ////////////////////////////////////////////////////////////////////////////
-   // Detect waveform peaks
+   // Note detection
+
+   static constexpr auto release = 50_ms;
+   static constexpr auto gate_attack_threshold = -20_dB;
+   static constexpr auto gate_release_threshold = -36_dB;
 
    auto i = out.begin();
 
-   auto onset = q::onset_detector{ -36_dB, sps };
-   auto edge = q::rising_edge{};
-   auto pulse = q::monostable{ 15_ms, sps };
+   auto _note = q::note_detector{hold, sps };
+   auto _main_env = q::peak_envelope_follower{ release, sps };
+   auto _gate = q::window_comparator{ gate_release_threshold, gate_attack_threshold, };
+   auto _dc_blk = q::dc_block{f, sps };
 
    for (auto s : in)
    {
-      auto r = onset(s);
+      auto main_env = _main_env(s);
+
+      // Noise gate
+      auto gate = _gate(main_env);
+      if (!gate)
+         s = 0.0f;
+
+      // DC Block
+      s = _dc_blk(s);
+
+      // Note detection
+      auto note = _note(s, gate);
+
+      if (note.first > 1.0f)
+         note.first = 1.0f;
+      else if (note.first < -1.0f)
+         note.first = -1.0f;
 
       *i++ = s;
-      *i++ = onset.peak_env();
-      *i++ = pulse(edge(r)) * 0.8;
+      *i++ = note.first;
+      *i++ = _note._pp._blank() * 0.8;
    }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -59,9 +81,7 @@ void process(std::string name, q::frequency f)
    src.read(in);
 
    ////////////////////////////////////////////////////////////////////////////
-   auto period = f.period();
-   std::size_t n = float(period) * sps;
-   process(name, in, sps, n * 1.1);
+   process(name, in, sps, f);
 }
 
 int main()

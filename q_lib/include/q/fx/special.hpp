@@ -105,9 +105,6 @@ namespace cycfi::q
    ////////////////////////////////////////////////////////////////////////////
    struct differentiator
    {
-      differentiator()
-       : x(0.0f) {}
-
       float operator()(float s)
       {
          auto val = s - x;
@@ -115,7 +112,7 @@ namespace cycfi::q
          return val;
       }
 
-      float x; // delayed input sample
+      float x = 0.0f; // delayed input sample
    };
 
    ////////////////////////////////////////////////////////////////////////////
@@ -148,6 +145,11 @@ namespace cycfi::q
       float operator()(float s)
       {
          return (y += _gain * s);
+      }
+
+      float operator()() const
+      {
+         return y;
       }
 
       integrator& operator=(float y_)
@@ -282,23 +284,29 @@ namespace cycfi::q
    // monostable is a one shot pulse generator. A single pulse input
    // generates a timed pulse of given duration.
    ////////////////////////////////////////////////////////////////////////////
-   struct monostable
+   template <bool retriggerable>
+   struct basic_monostable
    {
-      monostable(duration d, std::uint32_t sps)
+      basic_monostable(duration d, std::uint32_t sps)
        : _n_samples(float(d) * sps)
       {}
 
       bool operator()(bool val)
       {
-         if (_ticks == 0)
+         // If we got a 1
+         if (val)
          {
-            if (val)
-               _ticks = _n_samples;
+            // If retriggerable, always start
+            if constexpr(retriggerable)
+               start();
+
+            // Else, start only if we are at the end
+            else if (_ticks == 0)
+               start();
          }
-         else
-         {
+         // Count down
+         if (_ticks)
             --_ticks;
-         }
          return _ticks != 0;
       }
 
@@ -307,7 +315,12 @@ namespace cycfi::q
          return _ticks != 0;
       }
 
-      void reset()
+      void start()
+      {
+         _ticks = _n_samples;
+      }
+
+      void stop()
       {
          _ticks = 0;
       }
@@ -315,6 +328,9 @@ namespace cycfi::q
       std::uint32_t  _n_samples;
       std::uint32_t  _ticks = 0;
    };
+
+   using monostable = basic_monostable<false>;
+   using retriggerable_monostable = basic_monostable<true>;
 
    ////////////////////////////////////////////////////////////////////////////
    // rising_edge detects rising edges (i.e returns 1 when the input

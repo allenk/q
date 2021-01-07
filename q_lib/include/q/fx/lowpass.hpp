@@ -141,17 +141,17 @@ namespace cycfi::q
    //
    // This is probably faster than the RBJ biquds (see biquad.hpp),
    // especially when computing the coefficients (e.g. when sweeping the
-   // frequency) but this filter is rather limited, quirky and inacurate. Use
-   // this as a quick and dirty 'musical' filter. E.g. when you don't care
-   // about the actual frequency and Q, this one can be swept quickly using a
-   // normalized values from 0.0 to less than 1.0, possibly using some custom
-   // response curves (e.g. synth filters). Note that _f can't be == 1.0,
-   // otherwise, the _fb computation will have a divide by zero. It is also
-   // possible to supply the actual frequency, given the sps (samples per
-   // second), but take note that the limit is around 7kHz given a sampling
-   // rate of 44100, otherwise, the divide by zero.
+   // frequency) but this filter is rather limited, quirky and inaccurate.
+   // Use this as a quick and dirty 'musical' filter. E.g. when you don't
+   // care about the actual frequency and Q, this one can be swept quickly
+   // using a normalized values from 0.0 to less than 1.0, possibly using
+   // some custom response curves (e.g. synth filters). Note that _f can't be
+   // == 1.0, otherwise, the _fb computation will have a divide by zero. It
+   // is also possible to supply the actual frequency, given the sps (samples
+   // per second), but take note that the limit is around 7kHz given a
+   // sampling rate of 44100, otherwise, the divide by zero.
    //
-   // Unless you are in a pinch, I'd rather just use the RBJ biquds.
+   // Unless you are in a pinch, I'd rather just use the RBJ biquads.
    ////////////////////////////////////////////////////////////////////////////
    struct reso_filter
    {

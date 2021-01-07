@@ -53,7 +53,7 @@ namespace cycfi::q
        , _slope(1.0f - ratio)
       {}
 
-      decibel operator()(decibel env)
+      decibel operator()(decibel env) const
       {
          if (env <= _threshold)
             return 0_dB;
@@ -85,7 +85,7 @@ namespace cycfi::q
        , _slope(1.0f - ratio)
       {}
 
-      decibel operator()(decibel env)
+      decibel operator()(decibel env) const
       {
          if (env <= _lower)
          {
@@ -144,7 +144,7 @@ namespace cycfi::q
        , _slope(ratio)
       {}
 
-      decibel operator()(decibel env)
+      decibel operator()(decibel env) const
       {
          if (env >= _threshold)
             return 0_dB;
