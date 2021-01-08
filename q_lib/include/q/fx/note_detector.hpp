@@ -26,11 +26,12 @@ namespace cycfi::q
       struct post_processor
       {
          static constexpr auto blank_duration = 50_ms;
-         static constexpr auto threshold = float(-27_dB);
+         static constexpr auto min_threshold = float(-27_dB);
 
          post_processor(std::uint32_t sps)
           : _taper{ 80_ms, sps }
           , _blank{ blank_duration, sps }
+          , _peak_env{150_ms, sps }
          {
          }
 
@@ -42,9 +43,10 @@ namespace cycfi::q
             }
             else
             {
-               if (decay > -threshold)
+               _threshold = std::max(min_threshold, _peak_env() * float(-21_dB));
+               if (decay > -_threshold)
                   decay = 0.0f;
-               if (attack < threshold)
+               if (attack < _threshold)
                   attack = 0.0f;
             }
          }
@@ -54,20 +56,21 @@ namespace cycfi::q
             if (!gate)
             {
                _blank.stop();
-               _prev_attack = attack = 0;
+               _peak_env.y = _peak = attack = 0;
+               _threshold = float(-15_dB);
             }
             else
             {
                auto post_attack_blank = _blank();
-               auto start_attack = _blank(attack > threshold);
+               auto start_attack = _blank(attack > _threshold);
 
                if (post_attack_blank)  // Are we already blanked, post-attack?
                {
-                  if (attack > _prev_attack * float(3_dB))
+                  if (attack > _peak * float(3_dB))
                   {
                      // If we got a much stronger pulse, restart blank
                      _blank.start();
-                     _prev_attack = attack;
+                     _peak = attack;
                   }
                   else
                   {
@@ -75,11 +78,20 @@ namespace cycfi::q
                   }
                   decay = 0.0f;
                }
-               else if (start_attack)   // Start of attack
+               else
                {
-                  _blank.start();
-                  decay = 0.0f;
+                  if (start_attack)   // Start of attack
+                  {
+                     _blank.start();
+                     decay = 0.0f;
+                  }
+                  else
+                  {
+                     _peak = 0.0f;
+                  }
                }
+               // Update peak hold
+               _peak_env(_peak);
             }
          }
 
@@ -89,17 +101,16 @@ namespace cycfi::q
             attack = std::max(attack, -decay);
             process_thresholds(attack, decay, gate);
             process_attack(attack, decay, gate);
-
-            ++_tick;
             return { attack + decay, sync };
          }
 
          using pulse = monostable;
 
-         blackman_window   _taper;
-         pulse             _blank;
-         float             _prev_attack = 0.0f;
-         std::uint32_t     _tick = 0;
+         blackman_window         _taper;
+         pulse                   _blank;
+         float                   _peak = 0.0f;
+         peak_envelope_follower  _peak_env;
+         float                   _threshold;
       };
 
       note_detector(duration hold, std::uint32_t sps)
