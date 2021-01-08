@@ -31,6 +31,7 @@ namespace cycfi::q
          post_processor(std::uint32_t sps)
           : _taper{ 80_ms, sps }
           , _blank{ blank_duration, sps }
+          , _peak_env{150_ms, sps }
          {
          }
 
@@ -42,7 +43,7 @@ namespace cycfi::q
             }
             else
             {
-               _threshold = std::max(min_threshold, _peak_hold * float(-21_dB));
+               _threshold = std::max(min_threshold, _peak_env() * float(-21_dB));
                if (decay > -_threshold)
                   decay = 0.0f;
                if (attack < _threshold)
@@ -55,7 +56,7 @@ namespace cycfi::q
             if (!gate)
             {
                _blank.stop();
-               _peak_hold = _peak = attack = 0;
+               _peak_env.y = _peak = attack = 0;
                _threshold = float(-15_dB);
             }
             else
@@ -69,7 +70,7 @@ namespace cycfi::q
                   {
                      // If we got a much stronger pulse, restart blank
                      _blank.start();
-                     _peak_hold = std::min(_peak = attack, 1.0f);
+                     _peak = attack;
                   }
                   else
                   {
@@ -89,6 +90,8 @@ namespace cycfi::q
                      _peak = 0.0f;
                   }
                }
+               // Update peak hold
+               _peak_env(_peak);
             }
          }
 
@@ -103,11 +106,11 @@ namespace cycfi::q
 
          using pulse = monostable;
 
-         blackman_window   _taper;
-         pulse             _blank;
-         float             _peak = 0.0f;
-         float             _peak_hold = 0.0f;
-         float             _threshold;
+         blackman_window         _taper;
+         pulse                   _blank;
+         float                   _peak = 0.0f;
+         peak_envelope_follower  _peak_env;
+         float                   _threshold;
       };
 
       note_detector(duration hold, std::uint32_t sps)
