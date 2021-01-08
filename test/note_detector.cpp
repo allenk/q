@@ -50,15 +50,15 @@ void process(
       // Note detection
       auto note = _note(s, gate);
 
-      if (note.first > 1.0f)
-         note.first = 1.0f;
-      else if (note.first < -1.0f)
-         note.first = -1.0f;
+      if (note.attack > 1.0f)
+         note.attack = 1.0f;
+      if (note.decay > 1.0f)
+         note.decay = 1.0f;
 
       *i++ = s;
-      *i++ = note.first;
-      *i++ = _note._pp._blank() * 0.8;
-      *i++ = _note._pp._peak_env();
+      *i++ = note.attack;
+      *i++ = note.decay;
+      *i++ = _note.onset() * 0.8;
    }
 
    ////////////////////////////////////////////////////////////////////////////

@@ -23,10 +23,18 @@ namespace cycfi::q
       static constexpr auto compressor_slope = 1.0/8;
       static constexpr auto attack = 2_ms;
 
+      struct info
+      {
+         float    attack;
+         float    decay;
+         bool     ready;
+      };
+
       struct post_processor
       {
          static constexpr auto blank_duration = 50_ms;
          static constexpr auto min_threshold = float(-27_dB);
+         static constexpr auto decay_threshold = float(-36_dB);
 
          post_processor(std::uint32_t sps)
           : _taper{ 80_ms, sps }
@@ -44,14 +52,14 @@ namespace cycfi::q
             else
             {
                _threshold = std::max(min_threshold, _peak_env() * float(-21_dB));
-               if (decay > -_threshold)
+               if (decay > -decay_threshold)
                   decay = 0.0f;
                if (attack < _threshold)
                   attack = 0.0f;
             }
          }
 
-         void process_attack(float& attack, float& decay, bool gate)
+         void process_attack(float& attack, bool gate)
          {
             if (!gate)
             {
@@ -76,14 +84,12 @@ namespace cycfi::q
                   {
                      attack = 0.0f;
                   }
-                  decay = 0.0f;
                }
                else
                {
                   if (start_attack)   // Start of attack
                   {
                      _blank.start();
-                     decay = 0.0f;
                   }
                   else
                   {
@@ -95,13 +101,12 @@ namespace cycfi::q
             }
          }
 
-         std::pair<float, bool>
-         operator()(float attack, float decay, bool sync, bool gate)
+         info operator()(float attack, float decay, bool sync, bool gate)
          {
             attack = std::max(attack, -decay);
             process_thresholds(attack, decay, gate);
-            process_attack(attack, decay, gate);
-            return { attack + decay, sync };
+            process_attack(attack, gate);
+            return { attack, -decay, sync };
          }
 
          using pulse = monostable;
@@ -123,7 +128,7 @@ namespace cycfi::q
        , _pp{ sps }
       {}
 
-      std::pair<float, bool> operator()(float s, bool gate)
+      info operator()(float s, bool gate)
       {
          s = _integ(_lp(s));
 
@@ -149,6 +154,16 @@ namespace cycfi::q
          auto attack = gate ? pos_d1 + pos_d2 : 0.0f;
          auto decay = gate ? neg_d1 + neg_d2 : 0.0f;
          return _pp(attack, decay, sync, gate);
+      }
+
+      bool onset() const
+      {
+         return _pp._blank();
+      }
+
+      bool attack_envelope() const
+      {
+         return _pp._peak_env();
       }
 
       lowpass                 _lp;
