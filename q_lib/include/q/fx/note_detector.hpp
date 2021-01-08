@@ -11,7 +11,6 @@
 #include <q/fx/feature_detection.hpp>
 #include <q/fx/dynamic.hpp>
 #include <q/fx/biquad.hpp>
-#include <q/fx/taper.hpp>
 #include <q/fx/median.hpp>
 
 namespace cycfi::q
@@ -37,8 +36,7 @@ namespace cycfi::q
          static constexpr auto decay_threshold = float(-36_dB);
 
          post_processor(std::uint32_t sps)
-          : _taper{ 80_ms, sps }
-          , _blank{ blank_duration, sps }
+          : _blank{ blank_duration, sps }
           , _peak_env{150_ms, sps }
          {
          }
@@ -111,7 +109,6 @@ namespace cycfi::q
 
          using pulse = monostable;
 
-         blackman_window         _taper;
          pulse                   _blank;
          float                   _peak = 0.0f;
          peak_envelope_follower  _peak_env;
