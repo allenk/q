@@ -57,8 +57,9 @@ void process(
 
       *i++ = s;
       *i++ = note.first;
-      *i++ = _note._pp._blank() * 0.8;
-      *i++ = _note._pp._peak_env();
+      // *i++ = _note._pp._blank() * 0.8;
+      *i++ = _note._pp._threshold;
+      *i++ = _note._pp._peak_hold;
    }
 
    ////////////////////////////////////////////////////////////////////////////
