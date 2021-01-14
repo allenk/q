@@ -18,7 +18,7 @@ void process(
  , std::uint32_t sps, q::frequency f)
 {;
    q::duration hold = f.period() * 1.1;
-   constexpr auto n_channels = 4;
+   constexpr auto n_channels = 5;
    std::vector<float> out(in.size() * n_channels);
 
    ////////////////////////////////////////////////////////////////////////////
@@ -56,8 +56,11 @@ void process(
          note.decay = 1.0f;
 
       *i++ = s;
-      *i++ = note.attack;
-      *i++ = note.decay;
+      // *i++ = note.attack;
+      // *i++ = note.decay;
+      *i++ = _note._integ_env1() / 3;
+      *i++ = _note._integ_env2() / 3;
+      *i++ = _note._hp_env() / 3;
       *i++ = _note.onset() * 0.8;
    }
 
