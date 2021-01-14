@@ -36,8 +36,8 @@ namespace cycfi::q
          static constexpr auto decay_threshold = float(-36_dB);
 
          post_processor(std::uint32_t sps)
-          : _blank{ blank_duration, sps }
-          , _peak_env{150_ms, sps }
+          : _blank{blank_duration, sps}
+          , _peak_env{150_ms, sps}
          {
          }
 
@@ -104,7 +104,7 @@ namespace cycfi::q
             attack = std::max(attack, -decay);
             process_thresholds(attack, decay, gate);
             process_attack(attack, gate);
-            return { attack, -decay, sync };
+            return {attack, -decay, sync};
          }
 
          using pulse = monostable;
@@ -116,27 +116,28 @@ namespace cycfi::q
       };
 
       note_detector(duration hold, std::uint32_t sps)
-       : _lp{ frequency{ 4/float(hold) }, sps }
-       , _integ{ 0.004f/float(hold) }
-       , _integ_env1{ hold, sps }
-       , _integ_env2{ hold, sps }
-       , _comp_env{ attack, hold * 30, sps }
-       , _comp{ compressor_threshold, compressor_slope }
-       , _pp{ sps }
+       : _lp1{frequency{4 / float(hold) }, sps}
+       , _integ{0.004f/float(hold) }
+       , _integ_env1{hold, sps}
+       , _integ_env2{hold, sps}
+       , _integ_comp_env{attack, hold * 30, sps}
+       , _integ_comp{compressor_threshold, compressor_slope }
+       , _pp{sps}
       {}
 
       info operator()(float s, bool gate)
       {
-         s = _integ(_lp(s));
+         auto lp_out = _lp1(s);
+         auto integ_out = _integ(lp_out);
 
          // Compressor
-         auto comp_env = decibel{_comp_env(std::abs(s)) };
-         auto comp_gain = float(_comp(comp_env)) * compressor_makeup_gain;
-         s *= comp_gain;
+         auto comp_env = decibel{_integ_comp_env(std::abs(integ_out)) };
+         auto comp_gain = float(_integ_comp(comp_env)) * compressor_makeup_gain;
+         integ_out *= comp_gain;
 
          // Envelope Follower
-         auto e1 = _integ_env1(s);
-         auto e2 = _integ_env2(-s);
+         auto e1 = _integ_env1(integ_out);
+         auto e2 = _integ_env2(-integ_out);
          auto sync = e1.second;
 
          // Differentiator
@@ -163,13 +164,13 @@ namespace cycfi::q
          return _pp._peak_env();
       }
 
-      lowpass                 _lp;
+      lowpass                 _lp1;
       integrator              _integ;
       peak_hold               _integ_env1;
       peak_hold               _integ_env2;
 
-      envelope_follower       _comp_env;
-      compressor              _comp;
+      envelope_follower       _integ_comp_env;
+      compressor              _integ_comp;
 
       central_difference      _diff1{};
       central_difference      _diff2{};
