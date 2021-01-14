@@ -116,7 +116,8 @@ namespace cycfi::q
       };
 
       note_detector(duration hold, std::uint32_t sps)
-       : _lp1{frequency{4 / float(hold) }, sps}
+       : _range_lp{frequency{4 / float(hold) }, sps}
+       , _top_lp{6_kHz, sps}
        , _integ{0.004f/float(hold) }
        , _integ_env1{hold, sps}
        , _integ_env2{hold, sps}
@@ -127,8 +128,9 @@ namespace cycfi::q
 
       info operator()(float s, bool gate)
       {
-         auto lp_out = _lp1(s);
-         auto integ_out = _integ(lp_out);
+         auto lp2_out = _top_lp(s);
+         auto lp1_out = _range_lp(lp2_out);
+         auto integ_out = _integ(lp1_out);
 
          // Compressor
          auto comp_env = decibel{_integ_comp_env(std::abs(integ_out)) };
@@ -164,7 +166,8 @@ namespace cycfi::q
          return _pp._peak_env();
       }
 
-      lowpass                 _lp1;
+      lowpass                 _range_lp;
+      lowpass                 _top_lp;
       integrator              _integ;
       peak_hold               _integ_env1;
       peak_hold               _integ_env2;
