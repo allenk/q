@@ -11,6 +11,9 @@
 
 namespace cycfi::q
 {
+   ////////////////////////////////////////////////////////////////////////////
+   // precomputed_window
+   ////////////////////////////////////////////////////////////////////////////
    struct precomputed_window
    {
       float operator[](std::size_t i) const
@@ -24,6 +27,39 @@ namespace cycfi::q
       }
 
       std::vector<float> _w;
+   };
+
+   ////////////////////////////////////////////////////////////////////////////
+   // window_iterator
+   ////////////////////////////////////////////////////////////////////////////
+   struct window_iterator
+   {
+      window_iterator(precomputed_window& window_)
+       : _window{window_}
+       , _i{window_.size()}
+      {}
+
+      float operator()()
+      {
+         auto at_end = _i >= _window.size();
+         auto r = at_end? _window._w.front() : _window[_i];
+         if (!at_end)
+            ++_i;
+         return r;
+      }
+
+      void start()
+      {
+         _i = 0;
+      }
+
+      bool running() const
+      {
+         return _i < _window.size();
+      }
+
+      std::size_t          _i;
+      precomputed_window&  _window;
    };
 
    ////////////////////////////////////////////////////////////////////////////
