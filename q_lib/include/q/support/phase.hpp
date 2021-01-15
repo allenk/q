@@ -42,7 +42,7 @@ namespace cycfi::q
       constexpr explicit operator   float() const;
       constexpr explicit operator   double() const;
 
-      constexpr static phase        min()    { return phase(); }
+      constexpr static phase        min()    { return phase{}; }
       constexpr static phase        max()    { return phase(one_cyc); }
    };
 
@@ -61,6 +61,9 @@ namespace cycfi::q
       constexpr phase_iterator&     operator=(phase_iterator const& rhs) = default;
 
       constexpr void                set(frequency freq, std::uint32_t sps);
+      constexpr bool                first() const;
+      constexpr bool                last() const;
+      constexpr void                reset();
 
       phase                         _phase, _incr;
    };
@@ -69,7 +72,7 @@ namespace cycfi::q
    // Implementation
    ////////////////////////////////////////////////////////////////////////////
    constexpr phase::phase(value_type val)
-      : base_type(val)
+      : base_type{val}
    {}
 
    namespace detail
@@ -96,11 +99,11 @@ namespace cycfi::q
    }
 
    constexpr phase::phase(double frac)
-    : base_type(detail::frac_phase(frac))
+    : base_type{detail::frac_phase(frac)}
    {}
 
    constexpr phase::phase(float frac)
-    : base_type(detail::frac_phase(frac))
+    : base_type{detail::frac_phase(frac)}
    {}
 
    constexpr phase::phase(frequency freq, std::uint32_t sps)
@@ -120,13 +123,13 @@ namespace cycfi::q
    }
 
    constexpr phase_iterator::phase_iterator()
-    : _phase()
-    , _incr()
+    : _phase{}
+    , _incr{}
    {}
 
    constexpr phase_iterator::phase_iterator(frequency freq, std::uint32_t sps)
-    : _phase()
-    , _incr(freq, sps)
+    : _phase{}
+    , _incr{freq, sps}
    {}
 
    constexpr phase_iterator phase_iterator::operator++(int)
@@ -163,7 +166,22 @@ namespace cycfi::q
 
    constexpr void phase_iterator::set(frequency freq, std::uint32_t sps)
    {
-      _incr = { freq, sps };
+      _incr = {freq, sps};
+   }
+
+   constexpr bool phase_iterator::first() const
+   {
+      return _phase < _incr;
+   }
+
+   constexpr bool phase_iterator::last() const
+   {
+      return (phase::max()-_phase) < _incr;
+   }
+
+   constexpr void phase_iterator::reset()
+   {
+      _phase = phase{};
    }
 }
 
