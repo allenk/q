@@ -73,8 +73,8 @@ namespace cycfi::q
 
    ////////////////////////////////////////////////////////////////////////////
    // one_shot_phase_iterator: A variant of the phase_iterator that does not
-   // wrap around when it is incremented and it is at the end or when
-   // decremented and it is at the beginning.
+   // wrap around when incrementing at the end or when decremented at the
+   // beginning.
    //
    // Note: Branchfree Saturating Arithmetic using
    // http://locklessinc.com/articles/sat_arithmetic/
