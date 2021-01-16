@@ -47,6 +47,9 @@ namespace cycfi::q
    };
 
    ////////////////////////////////////////////////////////////////////////////
+   // phase_iterator: iterates over the phase with an interval specified by
+   // the supplied frequency.
+   ////////////////////////////////////////////////////////////////////////////
    struct phase_iterator
    {
       constexpr                     phase_iterator();
@@ -66,6 +69,25 @@ namespace cycfi::q
       constexpr void                reset();
 
       phase                         _phase, _incr;
+   };
+
+   ////////////////////////////////////////////////////////////////////////////
+   // one_shot_phase_iterator: A variant of the phase_iterator that does not
+   // wrap around when it is incremented and it is at the end or when
+   // decremented and it is at the beginning.
+   //
+   // Note: Branchfree Saturating Arithmetic using
+   // http://locklessinc.com/articles/sat_arithmetic/
+   //
+   ////////////////////////////////////////////////////////////////////////////
+   struct one_shot_phase_iterator : phase_iterator
+   {
+      using phase_iterator::phase_iterator;
+
+      constexpr one_shot_phase_iterator      operator++(int);
+      constexpr one_shot_phase_iterator&     operator++();
+      constexpr one_shot_phase_iterator      operator--(int);
+      constexpr one_shot_phase_iterator&     operator--();
    };
 
    ////////////////////////////////////////////////////////////////////////////
@@ -182,6 +204,36 @@ namespace cycfi::q
    constexpr void phase_iterator::reset()
    {
       _phase = phase{};
+   }
+
+   constexpr one_shot_phase_iterator one_shot_phase_iterator::operator++(int)
+   {
+      one_shot_phase_iterator r = *this;
+      ++(*this);
+      return r;
+   }
+
+   constexpr one_shot_phase_iterator& one_shot_phase_iterator::operator++()
+   {
+      auto res = _phase.rep + _incr.rep;
+      res |= -(res < _phase.rep);
+      _phase.rep = res;
+      return *this;
+   }
+
+   constexpr one_shot_phase_iterator one_shot_phase_iterator::operator--(int)
+   {
+      one_shot_phase_iterator r = *this;
+      --(*this);
+      return r;
+   }
+
+   constexpr one_shot_phase_iterator& one_shot_phase_iterator::operator--()
+   {
+	   auto res = _phase.rep - _incr.rep;
+	   res &= -(res <= _phase.rep);
+      _phase.rep = res;
+      return *this;
    }
 }
 
