@@ -7,7 +7,7 @@
 #include <q_io/audio_file.hpp>
 #include <q/fx/note_detector.hpp>
 #include <q/fx/special.hpp>
-#include <q/fx/taper.hpp>
+#include <q/synth/blackman.hpp>
 #include <vector>
 #include "notes.hpp"
 
@@ -46,9 +46,9 @@ void process(
    auto _dc_blk = q::dc_block{f, sps};
 
    auto _edge = q::rising_edge{};
-   auto _taper = q::blackman_window{100_ms, sps};
-   auto _taper1 = q::window_iterator{_taper};
-   auto _taper2 = q::window_iterator{_taper};
+   auto _taper = q::blackman;
+   auto _i1 = q::one_shot_phase_iterator{10_Hz, sps};
+   auto _i2 = q::one_shot_phase_iterator{10_Hz, sps};
 
    for (auto s : in)
    {
@@ -73,12 +73,12 @@ void process(
       *i++ = raw;
       if (_edge(_note.onset()))
       {
-         if (!_taper1.running())
-            _taper1.start();
+         if (!_i1.last())
+            _i1.reset();
          else
-            _taper2.start();
+            _i2.reset();
       }
-      *i++ = (_taper1() + _taper2()) * raw;
+      *i++ = (_taper(_i1++) + _taper(_i2++)) * raw;
 
 #if !defined(ND_DEMO)
       *i++ = _note._integ_env1() / 3;

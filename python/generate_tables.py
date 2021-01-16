@@ -35,9 +35,9 @@ if __name__ == "__main__":
    elif what == "hamming":
       func = generate_hamming_table
    elif what == "blackman":
-         func = generate_blackman_table
+      func = generate_blackman_table
    elif what == "crossfade":
-         func = generate_crossfade_table
+      func = generate_crossfade_table
 
    if func:
       for val in func(1024):
