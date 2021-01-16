@@ -34,7 +34,7 @@ void process(
    // Note detection
 
    static constexpr auto release = 50_ms;
-   static constexpr auto gate_attack_threshold = -20_dB;
+   static constexpr auto gate_attack_threshold = -33_dB;
    static constexpr auto gate_release_threshold = -36_dB;
 
    auto i = out.begin();
