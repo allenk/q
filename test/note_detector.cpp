@@ -16,14 +16,14 @@ using namespace q::literals;
 using namespace notes;
 
 // Commment this out for testing and diagnostics
-#define ND_DEMO
+#define NO_DIAGNOSTICS
 
 void process(
    std::string name, std::vector<float> const& in
  , std::uint32_t sps, q::frequency f)
 {;
    q::duration hold = f.period() * 1.1;
-#if defined(ND_DEMO)
+#if defined(NO_DIAGNOSTICS)
    constexpr auto n_channels = 2;
 #else
    constexpr auto n_channels = 6;
@@ -47,8 +47,8 @@ void process(
 
    auto _edge = q::rising_edge{};
    auto _taper = q::blackman;
-   auto _i1 = q::one_shot_phase_iterator{10_Hz, sps};
-   auto _i2 = q::one_shot_phase_iterator{10_Hz, sps};
+   auto _i1 = q::one_shot_phase_iterator{15_Hz, sps};
+   auto _i2 = q::one_shot_phase_iterator{15_Hz, sps};
 
    for (auto s : in)
    {
@@ -73,14 +73,16 @@ void process(
       *i++ = raw;
       if (_edge(_note.onset()))
       {
-         if (!_i1.last())
+         if (_i1.last())
             _i1.reset();
-         else
+         else if (_i2.last())
             _i2.reset();
       }
-      *i++ = (_taper(_i1++) + _taper(_i2++)) * raw;
+      auto t1 = _taper(_i1++);
+      auto t2 = _taper(_i2++);
+      *i++ = (t1 + t2) * raw;
 
-#if !defined(ND_DEMO)
+#if !defined(NO_DIAGNOSTICS)
       *i++ = _note._integ_env1() / 3;
       *i++ = _note._integ_env2() / 3;
       *i++ = _note._hp_env() / 3;
