@@ -11,6 +11,7 @@
 #include <q/fx/allpass.hpp>
 #include <q/fx/delay.hpp>
 #include <q/fx/moving_average.hpp>
+#include <q/fx/envelope.hpp>
 
 namespace cycfi::q
 {
