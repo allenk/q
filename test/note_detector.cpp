@@ -26,7 +26,7 @@ void process(
 #if defined(NO_DIAGNOSTICS)
    constexpr auto n_channels = 2;
 #else
-   constexpr auto n_channels = 4;
+   constexpr auto n_channels = 6;
 #endif
    std::vector<float> out(in.size() * n_channels);
 
@@ -58,22 +58,37 @@ void process(
          note.decay = 1.0f;
 
       *i++ = raw;
-      if (_edge(_note.onset()))
+
+      if (!_note._gate())
+      {
+         _i1.reset_to_back();
+         _i2.reset_to_back();
+      }
+      else if (_edge(_note.onset()))
       {
          if (_i1.last())
             _i1.reset();
          else if (_i2.last())
             _i2.reset();
       }
+
       auto t1 = _taper(_i1++);
       auto t2 = _taper(_i2++);
       *i++ = (t1 + t2) * raw;
 
 #if !defined(NO_DIAGNOSTICS)
-      // *i++ = _note._integ_env1() / 3;
-      // *i++ = _note._integ_env2() / 3;
-      // *i++ = _note._hp_env() / 3;
-      *i++ = _note._gate_env() * 0.8;
+
+      // Inspect the gate and output envelopes
+      *i++ = t1;
+      *i++ = t2;
+      auto gate_env = _note._gate_env();
+      *i++ = gate_env * 0.8;
+
+      // Inspect the analysis envelopes
+      // *i++ = _note._integ_env1() / 3; // upper integrator
+      // *i++ = _note._integ_env2() / 3; // lower integrator
+      // *i++ = _note._hp_env() / 3;     // differentiator
+
       *i++ = _note.onset() * 0.8;
 #endif
    }
