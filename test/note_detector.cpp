@@ -16,7 +16,7 @@ using namespace q::literals;
 using namespace notes;
 
 // Commment this out for testing and diagnostics
-#define NO_DIAGNOSTICS
+//#define NO_DIAGNOSTICS
 
 void process(
    std::string name, std::vector<float> const& in
@@ -26,7 +26,7 @@ void process(
 #if defined(NO_DIAGNOSTICS)
    constexpr auto n_channels = 2;
 #else
-   constexpr auto n_channels = 6;
+   constexpr auto n_channels = 4;
 #endif
    std::vector<float> out(in.size() * n_channels);
 
@@ -40,11 +40,6 @@ void process(
    auto i = out.begin();
 
    auto _note = q::note_detector{hold, sps};
-   auto _main_env = q::peak_envelope_follower{release, sps};
-   auto _gate = q::window_comparator{gate_release_threshold, gate_attack_threshold};
-   auto _gate_env = q::envelope_follower{500_us, 1_ms, sps};
-   auto _dc_blk = q::dc_block{f, sps};
-
    auto _edge = q::rising_edge{};
    auto _taper = q::blackman;
    auto _i1 = q::one_shot_phase_iterator{15_Hz, sps};
@@ -53,17 +48,9 @@ void process(
    for (auto s : in)
    {
       auto raw = s;
-      auto main_env = _main_env(s);
-
-      // Noise gate
-      auto gate = _gate(main_env);
-      s *= _gate_env(gate);
-
-      // DC Block
-      s = _dc_blk(s);
 
       // Note detection
-      auto note = _note(s, gate);
+      auto note = _note(s);
 
       if (note.attack > 1.0f)
          note.attack = 1.0f;
@@ -83,9 +70,10 @@ void process(
       *i++ = (t1 + t2) * raw;
 
 #if !defined(NO_DIAGNOSTICS)
-      *i++ = _note._integ_env1() / 3;
-      *i++ = _note._integ_env2() / 3;
-      *i++ = _note._hp_env() / 3;
+      // *i++ = _note._integ_env1() / 3;
+      // *i++ = _note._integ_env2() / 3;
+      // *i++ = _note._hp_env() / 3;
+      *i++ = _note._gate_env() * 0.8;
       *i++ = _note.onset() * 0.8;
 #endif
    }

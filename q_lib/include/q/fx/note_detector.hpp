@@ -135,10 +135,20 @@ namespace cycfi::q
        , _hp_comp_env{attack, hold * 30, sps}
        , _hp_comp{compressor_threshold, compressor_slope}
        , _pp{sps}
+       , _gate{sps}
+       , _gate_env{500_us, 1_ms, sps}
+       , _dc_blk{frequency{1.0f/float(hold)}, sps}
       {}
 
-      info operator()(float s, bool gate)
+      info operator()(float s)
       {
+         // Noise gate
+         auto gate = _gate(s);
+         s *= _gate_env(gate);
+
+         // DC Block
+         s = _dc_blk(s);
+
          // Separate the low frequency and high frequency components
          auto top_lp = _top_lp(s);           // 6 kHz lowpass
          auto hp = s - top_lp;               // 6 kHz highpass
@@ -207,6 +217,9 @@ namespace cycfi::q
       central_difference      _diff3{};
 
       post_processor          _pp;
+      noise_gate              _gate;
+      envelope_follower       _gate_env;
+      dc_block                _dc_blk;
    };
 }
 
