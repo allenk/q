@@ -67,6 +67,8 @@ namespace cycfi::q
       constexpr bool                first() const;
       constexpr bool                last() const;
       constexpr void                reset();
+      constexpr void                reset_to_front();
+      constexpr void                reset_to_back();
 
       phase                         _phase, _incr;
    };
@@ -204,6 +206,16 @@ namespace cycfi::q
    constexpr void phase_iterator::reset()
    {
       _phase = phase{};
+   }
+
+   constexpr void phase_iterator::reset_to_front()
+   {
+      _phase = phase{};
+   }
+
+   constexpr void phase_iterator::reset_to_back()
+   {
+      _phase = phase::max();
    }
 
    constexpr one_shot_phase_iterator one_shot_phase_iterator::operator++(int)
