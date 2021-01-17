@@ -44,6 +44,7 @@ namespace cycfi::q
 
       constexpr static phase        min()    { return phase{}; }
       constexpr static phase        max()    { return phase(one_cyc); }
+      constexpr static phase        half()    { return phase(one_cyc/2); }
    };
 
    ////////////////////////////////////////////////////////////////////////////
@@ -66,9 +67,10 @@ namespace cycfi::q
       constexpr void                set(frequency freq, std::uint32_t sps);
       constexpr bool                first() const;
       constexpr bool                last() const;
-      constexpr void                reset();
-      constexpr void                reset_to_front();
-      constexpr void                reset_to_back();
+
+      constexpr phase_iterator      front() const;
+      constexpr phase_iterator      back() const;
+      constexpr phase_iterator      mid() const;
 
       phase                         _phase, _incr;
    };
@@ -85,6 +87,7 @@ namespace cycfi::q
    struct one_shot_phase_iterator : phase_iterator
    {
       using phase_iterator::phase_iterator;
+      using phase_iterator::operator=;
 
       constexpr one_shot_phase_iterator      operator++(int);
       constexpr one_shot_phase_iterator&     operator++();
@@ -203,19 +206,25 @@ namespace cycfi::q
       return (phase::max()-_phase) < _incr;
    }
 
-   constexpr void phase_iterator::reset()
+   constexpr phase_iterator phase_iterator::front() const
    {
-      _phase = phase{};
+      auto r = *this;
+      r._phase = phase::min();
+      return r;
    }
 
-   constexpr void phase_iterator::reset_to_front()
+   constexpr phase_iterator phase_iterator::back() const
    {
-      _phase = phase{};
+      auto r = *this;
+      r._phase = phase::max();
+      return r;
    }
 
-   constexpr void phase_iterator::reset_to_back()
+   constexpr phase_iterator phase_iterator::mid() const
    {
-      _phase = phase::max();
+      auto r = *this;
+      r._phase = phase::half();
+      return r;
    }
 
    constexpr one_shot_phase_iterator one_shot_phase_iterator::operator++(int)

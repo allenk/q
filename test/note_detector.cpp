@@ -61,15 +61,15 @@ void process(
 
       if (!_note._gate())
       {
-         _i1.reset_to_back();
-         _i2.reset_to_back();
+         _i1 = _i1.back();
+         _i2 = _i2.back();
       }
       else if (_edge(_note.onset()))
       {
          if (_i1.last())
-            _i1.reset();
+            _i1 = _i1.front();
          else if (_i2.last())
-            _i2.reset();
+            _i2 = _i2.front();
       }
 
       auto t1 = _taper(_i1++);
