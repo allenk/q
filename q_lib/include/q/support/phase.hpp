@@ -42,9 +42,9 @@ namespace cycfi::q
       constexpr explicit operator   float() const;
       constexpr explicit operator   double() const;
 
-      constexpr static phase        min()    { return phase{}; }
-      constexpr static phase        max()    { return phase(one_cyc); }
-      constexpr static phase        half()    { return phase(one_cyc/2); }
+      constexpr static phase        begin()     { return phase{}; }
+      constexpr static phase        end()       { return phase(one_cyc); }
+      constexpr static phase        middle()    { return phase(one_cyc/2); }
    };
 
    ////////////////////////////////////////////////////////////////////////////
@@ -68,9 +68,9 @@ namespace cycfi::q
       constexpr bool                first() const;
       constexpr bool                last() const;
 
-      constexpr phase_iterator      front() const;
-      constexpr phase_iterator      back() const;
-      constexpr phase_iterator      mid() const;
+      constexpr phase_iterator      begin() const;
+      constexpr phase_iterator      end() const;
+      constexpr phase_iterator      middle() const;
 
       phase                         _phase, _incr;
    };
@@ -110,7 +110,7 @@ namespace cycfi::q
             "Frac should be greater than 0"
          );
          return (frac >= 1.0)?
-            phase::max().rep :
+            phase::end().rep :
             pow2<double>(phase::bits) * frac;
       }
 
@@ -120,7 +120,7 @@ namespace cycfi::q
             "Frac should be greater than 0"
          );
          return (frac >= 1.0f)?
-            phase::max().rep :
+            phase::end().rep :
             pow2<float>(phase::bits) * frac;
       }
    }
@@ -203,27 +203,27 @@ namespace cycfi::q
 
    constexpr bool phase_iterator::last() const
    {
-      return (phase::max()-_phase) < _incr;
+      return (phase::end()-_phase) < _incr;
    }
 
-   constexpr phase_iterator phase_iterator::front() const
+   constexpr phase_iterator phase_iterator::begin() const
    {
       auto r = *this;
-      r._phase = phase::min();
+      r._phase = phase::begin();
       return r;
    }
 
-   constexpr phase_iterator phase_iterator::back() const
+   constexpr phase_iterator phase_iterator::end() const
    {
       auto r = *this;
-      r._phase = phase::max();
+      r._phase = phase::end();
       return r;
    }
 
-   constexpr phase_iterator phase_iterator::mid() const
+   constexpr phase_iterator phase_iterator::middle() const
    {
       auto r = *this;
-      r._phase = phase::half();
+      r._phase = phase::middle();
       return r;
    }
 
